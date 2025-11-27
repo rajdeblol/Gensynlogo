@@ -6,7 +6,7 @@
 <style>
   body {
     margin: 0;
-    background: #000;
+    background: #000; /* Black background, can change to another color if needed, e.g., #1a1a1a for dark gray */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -55,9 +55,6 @@ const canvas = document.getElementById("c");
 const ctx = canvas.getContext("2d");
 const upload = document.getElementById("upload");
 const downloadBtn = document.getElementById("downloadBtn");
-
-const logo = new Image();
-logo.src = "gensyn-logo.png"; // your pixel-ring logo
 
 let userImg;
 
@@ -137,8 +134,15 @@ function drawMinecraftFrame() {
 }
 
 function drawLogo() {
-  const size = 380;
-  ctx.drawImage(logo, (512 - size) / 2, (512 - size) / 2, size, size);
+  const centerX = 256;
+  const centerY = 256;
+  const radius = 180;
+  const lineWidth = 20;
+  ctx.strokeStyle = "#f4a0a0"; // Using the pinkish color from the button for the logo ring
+  ctx.lineWidth = lineWidth;
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+  ctx.stroke();
 }
 </script>
 
