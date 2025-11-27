@@ -1,208 +1,146 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Gensyn × Minecraft PFP Generator</title>
-  <style>
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #000000; /* same as logo bg */
-      color: #ffffff;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-    .card {
-      background: #111;
-      padding: 18px 22px;
-      border-radius: 16px;
-      border: 1px solid #333;
-      box-shadow: 0 0 30px rgba(0,0,0,0.6);
-      max-width: 480px;
-      width: 100%;
-    }
-    h1 {
-      font-size: 20px;
-      margin: 0 0 12px;
-      text-align: center;
-    }
-    .controls {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 12px;
-    }
-    input[type="file"] {
-      width: 100%;
-    }
-    button {
-      padding: 8px 10px;
-      border-radius: 10px;
-      border: none;
-      background: #f68bb9;
-      color: #000;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    button:disabled {
-      opacity: 0.4;
-      cursor: default;
-    }
-    canvas {
-      display: block;
-      margin: 10px auto 0;
-      image-rendering: pixelated;
-      border-radius: 10px;
-    }
-    small {
-      display: block;
-      text-align: center;
-      opacity: 0.7;
-      margin-top: 4px;
-      font-size: 11px;
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Gensyn × Minecraft PFP Generator</title>
+<style>
+  body {
+    margin: 0;
+    background: #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: monospace;
+    color: white;
+  }
+  .box {
+    padding: 20px;
+    background: #111;
+    border-radius: 14px;
+    width: 420px;
+    text-align: center;
+    border: 1px solid #333;
+  }
+  canvas { 
+    margin-top: 18px;
+    width: 360px; 
+    height: 360px;
+    image-rendering: pixelated;
+  }
+  button {
+    margin-top: 10px;
+    padding: 8px 14px;
+    background: #f4a0a0;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  input { margin-top: 6px; }
+</style>
 </head>
 <body>
-  <div class="card">
-    <h1>gensyn × minecraft pfp</h1>
 
-    <div class="controls">
-      <input id="pfp-input" type="file" accept="image/*" />
-      <button id="download-btn" disabled>Download PFP</button>
-    </div>
+<div class="box">
+  <h2>gensyn × minecraft pfp</h2>
+  <input type="file" id="upload" accept="image/*">
+  <button id="downloadBtn" disabled>download</button>
 
-    <canvas id="canvas" width="512" height="512"></canvas>
-    <small>upload pfp → auto frame → download</small>
-  </div>
+  <canvas id="c" width="512" height="512"></canvas>
+</div>
 
-  <script>
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const fileInput = document.getElementById('pfp-input');
-    const downloadBtn = document.getElementById('download-btn');
+<script>
+const canvas = document.getElementById("c");
+const ctx = canvas.getContext("2d");
+const upload = document.getElementById("upload");
+const downloadBtn = document.getElementById("downloadBtn");
 
-    const SIZE = canvas.width; // 512
+const logo = new Image();
+logo.src = "gensyn-logo.png"; // your pixel-ring logo
 
-    // Load gensyn logo
-    const logo = new Image();
-    logo.src = 'gensyn-logo.png';
+let userImg;
 
-    let userImg = null;
+upload.addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-    logo.onload = () => draw(); // draw default frame once logo is ready
+  const reader = new FileReader();
+  reader.onload = ev => {
+    userImg = new Image();
+    userImg.onload = generate;
+    userImg.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+});
 
-    fileInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
+downloadBtn.addEventListener("click", () => {
+  const link = document.createElement("a");
+  link.download = "gensyn-minecraft-pfp.png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+});
 
-      const reader = new FileReader();
-      reader.onload = (ev) => {
-        userImg = new Image();
-        userImg.onload = () => {
-          draw();
-          downloadBtn.disabled = false;
-        };
-        userImg.src = ev.target.result;
-      };
-      reader.readAsDataURL(file);
-    });
+function generate() {
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    downloadBtn.addEventListener('click', () => {
-      const link = document.createElement('a');
-      link.download = 'gensyn-mc-pfp.png';
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-    });
+  drawMinecraftFrame();
+  drawPixelatedAvatar();
+  drawLogo();
 
-    function drawMinecraftBorder() {
-      const block = 32;
+  downloadBtn.disabled = false;
+}
 
-      // top grass + dirt
-      for (let x = 0; x < SIZE; x += block) {
-        // grass layer
-        ctx.fillStyle = '#3b8526'; // grass green
-        ctx.fillRect(x, 0, block, block);
-        // dirt under grass
-        ctx.fillStyle = '#5b3b1a'; // dirt brown
-        ctx.fillRect(x, block, block, block);
-      }
+function drawPixelatedAvatar() {
+  const pixelSize = 16; // bigger pixel = more Minecraft look
+  const size = 350;
+  const x = (512 - size) / 2;
+  const y = (512 - size) / 2;
 
-      // bottom dirt
-      for (let x = 0; x < SIZE; x += block) {
-        ctx.fillStyle = '#5b3b1a';
-        ctx.fillRect(x, SIZE - block, block, block);
-      }
+  // draw PFP small → scale up → pixelated
+  const temp = document.createElement("canvas");
+  const tctx = temp.getContext("2d");
+  temp.width = temp.height = size / pixelSize;
 
-      // left & right stone columns
-      for (let y = 0; y < SIZE; y += block) {
-        ctx.fillStyle = '#7f7f7f'; // stone grey
-        ctx.fillRect(0, y, block, block);
-        ctx.fillRect(SIZE - block, y, block, block);
-      }
-    }
+  // crop square
+  const s = Math.min(userImg.width, userImg.height);
+  const sx = (userImg.width - s) / 2;
+  const sy = (userImg.height - s) / 2;
 
-    function drawAvatar() {
-      if (!userImg) return;
+  tctx.drawImage(userImg, sx, sy, s, s, 0, 0, temp.width, temp.height);
 
-      const avatarSize = SIZE * 0.55; // circle size
-      const ax = (SIZE - avatarSize) / 2;
-      const ay = (SIZE - avatarSize) / 2;
+  ctx.imageSmoothingEnabled = false;
 
-      // crop avatar to square
-      const minSide = Math.min(userImg.width, userImg.height);
-      const sx = (userImg.width - minSide) / 2;
-      const sy = (userImg.height - minSide) / 2;
+  ctx.drawImage(temp, 0, 0, temp.width, temp.height, x, y, size, size);
+}
 
-      ctx.save();
-      ctx.beginPath();
-      ctx.arc(SIZE / 2, SIZE / 2, avatarSize / 2, 0, Math.PI * 2);
-      ctx.closePath();
-      ctx.clip();
+function drawMinecraftFrame() {
+  const block = 64;
 
-      ctx.drawImage(
-        userImg,
-        sx, sy, minSide, minSide,
-        ax, ay, avatarSize, avatarSize
-      );
+  for (let i = 0; i < 512; i += block) {
+    // top
+    ctx.fillStyle = "#3ba12f"; // grass
+    ctx.fillRect(i, 0, block, block / 2);
+    ctx.fillStyle = "#6b4721"; // dirt
+    ctx.fillRect(i, block / 2, block, block / 2);
 
-      ctx.restore();
-    }
+    // bottom dirt
+    ctx.fillStyle = "#6b4721";
+    ctx.fillRect(i, 512 - block, block, block);
 
-    function drawLogo() {
-      if (!logo.complete) return;
+    // left + right edges
+    ctx.fillStyle = "#7c7c7c"; // stone
+    ctx.fillRect(0, i, block, block);
+    ctx.fillRect(512 - block, i, block, block);
+  }
+}
 
-      const logoSize = SIZE * 0.8; // ring big in the middle
-      const lx = (SIZE - logoSize) / 2;
-      const ly = (SIZE - logoSize) / 2;
+function drawLogo() {
+  const size = 380;
+  ctx.drawImage(logo, (512 - size) / 2, (512 - size) / 2, size, size);
+}
+</script>
 
-      ctx.drawImage(logo, lx, ly, logoSize, logoSize);
-    }
-
-    function drawText() {
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 26px monospace';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('gensyn × minecraft', SIZE / 2, SIZE - 40);
-    }
-
-    function draw() {
-      // main background
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(0, 0, SIZE, SIZE);
-
-      drawMinecraftBorder();
-      drawAvatar();
-      drawLogo();
-      drawText();
-    }
-
-    // initial empty frame
-    draw();
-  </script>
 </body>
 </html>
